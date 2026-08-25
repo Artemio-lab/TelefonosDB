@@ -21,8 +21,12 @@ public class Conexion {
         }
     }
 
+    private Conexion() {
+        // Clase utilitaria: no se instancia
+    }
 
     public static Connection obtenerConexion() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 }
+

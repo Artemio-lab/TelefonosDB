@@ -15,9 +15,9 @@ import java.util.List;
  */
 public class PersonaDAO {
 
-    //Devuelve las personas ordenadas por ID
+    /** Devuelve todas las personas ordenadas por id. */
     public List<Persona> listarTodas() throws SQLException {
-        String sql = "SELECT id, nombre, direccion FROM Personas ORDER BY id";
+        String sql = "SELECT id, nombre FROM Personas ORDER BY id";
         List<Persona> personas = new ArrayList<>();
 
         try (Connection conn = Conexion.obtenerConexion();
@@ -25,25 +25,20 @@ public class PersonaDAO {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                personas.add(new Persona(
-                        rs.getInt("id"),
-                        rs.getString("nombre"),
-                        rs.getString("direccion")
-                ));
+                personas.add(new Persona(rs.getInt("id"), rs.getString("nombre")));
             }
         }
         return personas;
     }
 
-    //Al momento de crear una persona devuelve su ID
-    public int insertar(String nombre, String direccion) throws SQLException {
-        String sql = "INSERT INTO Personas (nombre, direccion) VALUES (?, ?)";
+    /** Alta de una nueva persona. Devuelve el id generado. */
+    public int insertar(String nombre) throws SQLException {
+        String sql = "INSERT INTO Personas (nombre) VALUES (?)";
 
         try (Connection conn = Conexion.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, nombre);
-            ps.setString(2, direccion);
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -55,32 +50,35 @@ public class PersonaDAO {
         return -1;
     }
 
-    //Modifica una persona ya existente
-    public boolean actualizar(int id, String nombre, String direccion) throws SQLException {
-        String sql = "UPDATE Personas SET nombre = ?, direccion = ? WHERE id = ?";
+    /** Modificación del nombre de una persona existente. */
+    public boolean actualizar(int id, String nombre) throws SQLException {
+        String sql = "UPDATE Personas SET nombre = ? WHERE id = ?";
 
         try (Connection conn = Conexion.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, nombre);
-            ps.setString(2, direccion);
-            ps.setInt(3, id);
+            ps.setInt(2, id);
             return ps.executeUpdate() > 0;
         }
     }
 
-    //Sirve para eliminar una persona, primero elimina todos sus numeros y luego a la persona
     public boolean eliminar(int id) throws SQLException {
         String sqlTelefonos = "DELETE FROM Telefonos WHERE personaId = ?";
+        String sqlDirecciones = "DELETE FROM PersonaDireccion WHERE personaId = ?";
         String sqlPersona = "DELETE FROM Personas WHERE id = ?";
 
         try (Connection conn = Conexion.obtenerConexion()) {
             conn.setAutoCommit(false);
             try (PreparedStatement psTel = conn.prepareStatement(sqlTelefonos);
+                 PreparedStatement psDir = conn.prepareStatement(sqlDirecciones);
                  PreparedStatement psPer = conn.prepareStatement(sqlPersona)) {
 
                 psTel.setInt(1, id);
                 psTel.executeUpdate();
+
+                psDir.setInt(1, id);
+                psDir.executeUpdate();
 
                 psPer.setInt(1, id);
                 int filas = psPer.executeUpdate();

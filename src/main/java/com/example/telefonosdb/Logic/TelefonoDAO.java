@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class TelefonoDAO {
 
-    //Devuelve los numeros asociados a una persona
+    /** Devuelve todos los teléfonos asociados a una persona. */
     public List<Telefono> listarPorPersona(int personaId) throws SQLException {
         String sql = "SELECT id, personaId, telefono FROM Telefonos WHERE personaId = ? ORDER BY id";
         List<Telefono> telefonos = new ArrayList<>();
@@ -37,7 +37,7 @@ public class TelefonoDAO {
         return telefonos;
     }
 
-    //Agrega un nuevo teléfono a una persona y devuelve el ID generado
+    /** Alta de un nuevo teléfono para una persona. Devuelve el id generado. */
     public int insertar(int personaId, String telefono) throws SQLException {
         String sql = "INSERT INTO Telefonos (personaId, telefono) VALUES (?, ?)";
 
@@ -57,7 +57,7 @@ public class TelefonoDAO {
         return -1;
     }
 
-    //Sirve para modificar un telefono ya eistente
+    /** Modificación del número de un teléfono existente. */
     public boolean actualizar(int id, String telefono) throws SQLException {
         String sql = "UPDATE Telefonos SET telefono = ? WHERE id = ?";
 
@@ -70,7 +70,7 @@ public class TelefonoDAO {
         }
     }
 
-    //Borra un telefono por su ID
+    /** Baja de un teléfono por su id. */
     public boolean eliminar(int id) throws SQLException {
         String sql = "DELETE FROM Telefonos WHERE id = ?";
 
