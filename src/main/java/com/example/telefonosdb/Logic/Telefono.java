@@ -6,7 +6,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 /**
- * Clase base para los telefonos de las personas
+ * Modelo que representa una fila de la tabla Telefonos.
  */
 public class Telefono {
 

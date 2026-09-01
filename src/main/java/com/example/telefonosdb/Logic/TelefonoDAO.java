@@ -1,6 +1,7 @@
 package com.example.telefonosdb.Logic;
 
 import com.example.telefonosdb.Conexion;
+import com.example.telefonosdb.ConexionProvider;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,18 +10,24 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+public class TelefonoDAO implements TelefonoRepository {
 
-/**
- * Clase que contiene todos los metodos necesarios para un CRUD
- */
-public class TelefonoDAO {
+    private final ConexionProvider conexionProvider;
 
-    /** Devuelve todos los teléfonos asociados a una persona. */
+    public TelefonoDAO() {
+        this(new Conexion());
+    }
+
+    public TelefonoDAO(ConexionProvider conexionProvider) {
+        this.conexionProvider = conexionProvider;
+    }
+
+    @Override
     public List<Telefono> listarPorPersona(int personaId) throws SQLException {
         String sql = "SELECT id, personaId, telefono FROM Telefonos WHERE personaId = ? ORDER BY id";
         List<Telefono> telefonos = new ArrayList<>();
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, personaId);
@@ -37,11 +44,11 @@ public class TelefonoDAO {
         return telefonos;
     }
 
-    /** Alta de un nuevo teléfono para una persona. Devuelve el id generado. */
+    @Override
     public int insertar(int personaId, String telefono) throws SQLException {
         String sql = "INSERT INTO Telefonos (personaId, telefono) VALUES (?, ?)";
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, personaId);
@@ -57,11 +64,11 @@ public class TelefonoDAO {
         return -1;
     }
 
-    /** Modificación del número de un teléfono existente. */
+    @Override
     public boolean actualizar(int id, String telefono) throws SQLException {
         String sql = "UPDATE Telefonos SET telefono = ? WHERE id = ?";
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, telefono);
@@ -70,11 +77,11 @@ public class TelefonoDAO {
         }
     }
 
-    /** Baja de un teléfono por su id. */
+    @Override
     public boolean eliminar(int id) throws SQLException {
         String sql = "DELETE FROM Telefonos WHERE id = ?";
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);

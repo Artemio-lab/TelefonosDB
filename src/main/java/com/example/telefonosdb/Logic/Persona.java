@@ -6,8 +6,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 /**
- * Clase persona base, la cual sirve para agregarla
- * a la tabla de la base de datos
+ * Modelo que representa una fila de la tabla Personas.
  */
 public class Persona {
 

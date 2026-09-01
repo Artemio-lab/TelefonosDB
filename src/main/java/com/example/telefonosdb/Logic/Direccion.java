@@ -5,6 +5,9 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
+/**
+ * Modelo que representa una fila del catálogo de la tabla Direcciones.
+ */
 public class Direccion {
 
     private final IntegerProperty id;

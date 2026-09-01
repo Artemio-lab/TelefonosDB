@@ -4,14 +4,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- * Conecta java con la base de datos creada
- */
-public class Conexion {
+public class Conexion implements ConexionProvider {
 
-    private static final String URL = "jdbc:mariadb://localhost:3306/agenda";
-    private static final String USER = "usuario1";
-    private static final String PASSWORD = "superpassword";
+    private static final String URL_POR_DEFECTO = "jdbc:mariadb://localhost:3306/agenda";
+    private static final String USER_POR_DEFECTO = "usuario1";
+    private static final String PASSWORD_POR_DEFECTO = "superpassword";
 
     static {
         try {
@@ -21,12 +18,24 @@ public class Conexion {
         }
     }
 
-    private Conexion() {
-        // Clase utilitaria: no se instancia
+    private final String url;
+    private final String user;
+    private final String password;
+
+    /** Usa los datos de conexión por defecto. */
+    public Conexion() {
+        this(URL_POR_DEFECTO, USER_POR_DEFECTO, PASSWORD_POR_DEFECTO);
     }
 
-    public static Connection obtenerConexion() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+    /** Permite apuntar a otra base sin tener que modificar esta clase. */
+    public Conexion(String url, String user, String password) {
+        this.url = url;
+        this.user = user;
+        this.password = password;
+    }
+
+    @Override
+    public Connection obtenerConexion() throws SQLException {
+        return DriverManager.getConnection(url, user, password);
     }
 }
-

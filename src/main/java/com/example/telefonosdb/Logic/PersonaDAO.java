@@ -1,6 +1,7 @@
 package com.example.telefonosdb.Logic;
 
 import com.example.telefonosdb.Conexion;
+import com.example.telefonosdb.ConexionProvider;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,17 +11,24 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Clase la cual contiene todas las funciones de las personas que necesita un CRUD
- */
-public class PersonaDAO {
+public class PersonaDAO implements PersonaRepository {
 
-    /** Devuelve todas las personas ordenadas por id. */
+    private final ConexionProvider conexionProvider;
+
+    public PersonaDAO() {
+        this(new Conexion());
+    }
+
+    public PersonaDAO(ConexionProvider conexionProvider) {
+        this.conexionProvider = conexionProvider;
+    }
+
+    @Override
     public List<Persona> listarTodas() throws SQLException {
         String sql = "SELECT id, nombre FROM Personas ORDER BY id";
         List<Persona> personas = new ArrayList<>();
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -31,11 +39,11 @@ public class PersonaDAO {
         return personas;
     }
 
-    /** Alta de una nueva persona. Devuelve el id generado. */
+    @Override
     public int insertar(String nombre) throws SQLException {
         String sql = "INSERT INTO Personas (nombre) VALUES (?)";
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, nombre);
@@ -50,11 +58,11 @@ public class PersonaDAO {
         return -1;
     }
 
-    /** Modificación del nombre de una persona existente. */
+    @Override
     public boolean actualizar(int id, String nombre) throws SQLException {
         String sql = "UPDATE Personas SET nombre = ? WHERE id = ?";
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, nombre);
@@ -63,12 +71,16 @@ public class PersonaDAO {
         }
     }
 
+    /**
+     * Baja de una persona. Se eliminan primero sus teléfonos
+     */
+    @Override
     public boolean eliminar(int id) throws SQLException {
         String sqlTelefonos = "DELETE FROM Telefonos WHERE personaId = ?";
         String sqlDirecciones = "DELETE FROM PersonaDireccion WHERE personaId = ?";
         String sqlPersona = "DELETE FROM Personas WHERE id = ?";
 
-        try (Connection conn = Conexion.obtenerConexion()) {
+        try (Connection conn = conexionProvider.obtenerConexion()) {
             conn.setAutoCommit(false);
             try (PreparedStatement psTel = conn.prepareStatement(sqlTelefonos);
                  PreparedStatement psDir = conn.prepareStatement(sqlDirecciones);

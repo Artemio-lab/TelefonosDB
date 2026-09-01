@@ -1,19 +1,34 @@
 package com.example.telefonosdb.Logic;
 
 import com.example.telefonosdb.Conexion;
+import com.example.telefonosdb.ConexionProvider;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DireccionDAO {
+public class DireccionDAO implements DireccionRepository {
 
-    /** Devuelve el catálogo completo de direcciones (todas, sin importar a quién pertenecen). */
+    private final ConexionProvider conexionProvider;
+
+    public DireccionDAO() {
+        this(new Conexion());
+    }
+
+    public DireccionDAO(ConexionProvider conexionProvider) {
+        this.conexionProvider = conexionProvider;
+    }
+
+    @Override
     public List<Direccion> listarTodas() throws SQLException {
         String sql = "SELECT id, direccion FROM Direcciones ORDER BY direccion";
         List<Direccion> direcciones = new ArrayList<>();
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -24,7 +39,7 @@ public class DireccionDAO {
         return direcciones;
     }
 
-    /** Devuelve las direcciones asociadas a una persona específica. */
+    @Override
     public List<Direccion> listarPorPersona(int personaId) throws SQLException {
         String sql = """
                 SELECT d.id, d.direccion
@@ -35,7 +50,7 @@ public class DireccionDAO {
                 """;
         List<Direccion> direcciones = new ArrayList<>();
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, personaId);
@@ -48,7 +63,7 @@ public class DireccionDAO {
         return direcciones;
     }
 
-    /** Devuelve las personas que comparten una dirección dada. Útil para mostrar quién más vive ahí. */
+    @Override
     public List<Persona> listarPersonasPorDireccion(int direccionId) throws SQLException {
         String sql = """
                 SELECT p.id, p.nombre
@@ -59,7 +74,7 @@ public class DireccionDAO {
                 """;
         List<Persona> personas = new ArrayList<>();
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, direccionId);
@@ -72,11 +87,11 @@ public class DireccionDAO {
         return personas;
     }
 
-    /** Alta de una dirección nueva en el catálogo (todavía sin asociar a nadie). Devuelve el id generado. */
+    @Override
     public int insertar(String direccion) throws SQLException {
         String sql = "INSERT INTO Direcciones (direccion) VALUES (?)";
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, direccion);
@@ -91,14 +106,11 @@ public class DireccionDAO {
         return -1;
     }
 
-    /**
-     * Modifica el texto de una dirección existente. Como la dirección puede
-     * estar compartida, este cambio afecta a TODAS las personas asociadas.
-     */
+    @Override
     public boolean actualizar(int id, String direccion) throws SQLException {
         String sql = "UPDATE Direcciones SET direccion = ? WHERE id = ?";
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, direccion);
@@ -107,15 +119,12 @@ public class DireccionDAO {
         }
     }
 
-    /**
-     * Elimina una dirección del catálogo por completo, junto con todas sus
-     * asociaciones a personas (afecta a todos los que la compartían).
-     */
+    @Override
     public boolean eliminar(int id) throws SQLException {
         String sqlAsociaciones = "DELETE FROM PersonaDireccion WHERE direccionId = ?";
         String sqlDireccion = "DELETE FROM Direcciones WHERE id = ?";
 
-        try (Connection conn = Conexion.obtenerConexion()) {
+        try (Connection conn = conexionProvider.obtenerConexion()) {
             conn.setAutoCommit(false);
             try (PreparedStatement psAsoc = conn.prepareStatement(sqlAsociaciones);
                  PreparedStatement psDir = conn.prepareStatement(sqlDireccion)) {
@@ -137,14 +146,11 @@ public class DireccionDAO {
         }
     }
 
-    /**
-     * Asocia una dirección existente del catálogo a una persona (relación N:M).
-     * Si ya estaban asociadas, no hace nada (evita duplicados en la clave compuesta).
-     */
+    @Override
     public boolean asociar(int personaId, int direccionId) throws SQLException {
         String sql = "INSERT IGNORE INTO PersonaDireccion (personaId, direccionId) VALUES (?, ?)";
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, personaId);
@@ -153,14 +159,11 @@ public class DireccionDAO {
         }
     }
 
-    /**
-     * Quita la asociación entre una persona y una dirección, sin borrar la
-     * dirección del catálogo (puede seguir usándola otra persona).
-     */
+    @Override
     public boolean desasociar(int personaId, int direccionId) throws SQLException {
         String sql = "DELETE FROM PersonaDireccion WHERE personaId = ? AND direccionId = ?";
 
-        try (Connection conn = Conexion.obtenerConexion();
+        try (Connection conn = conexionProvider.obtenerConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, personaId);
